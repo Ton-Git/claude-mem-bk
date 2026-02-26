@@ -35,20 +35,16 @@ Result:
 
 ### 3) Related non-runtime assets to carry for parity
 
-These are not required to execute tools, but should be migrated if parity with main project packaging/docs is desired:
-- `docs/public/smart-explore-benchmark.mdx` (benchmark and usage claims)
-- `docs/public/docs.json` entry for Smart Explore benchmark navigation
-- `scripts/build-hooks.js` distribution check expectation for `plugin/skills/smart-explore/SKILL.md`
+These are not required to execute tools. For this phase, only useful runtime-adjacent assets were copied, and benchmark/docs assets were intentionally skipped.
 
 ## Phase 2 tasks
 
-- [ ] Copy `plugin/skills/smart-explore/SKILL.md` into `features-export` and keep frontmatter/instructions intact
-- [ ] Add a short `features-export` note describing how the skill pairs with `smart_search`/`smart_outline`/`smart_unfold`
-- [ ] Decide whether benchmark docs are in scope; if yes, migrate `smart-explore-benchmark.mdx` + docs navigation metadata
+- [x] Copy `plugin/skills/smart-explore/SKILL.md` into `features-export/skills/smart-explore/SKILL.md` and keep frontmatter/instructions intact
+- [x] Keep migration focused on useful files only (skill), and skip benchmark/docs assets
 - [ ] If this export is packaged, add a distribution check that verifies the migrated skill file exists
 
 ## Exit criteria for Phase 2
 
 - Export contains both runtime Smart Explore implementation and its skill guidance contract
 - Explicit confirmation documented that no Smart Explore-specific hook migration is required
-- Optional benchmark/docs parity decision is documented (migrated or intentionally deferred)
+- Benchmark/docs migration is intentionally deferred for this export scope
