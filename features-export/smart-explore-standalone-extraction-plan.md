@@ -28,9 +28,9 @@ Documentation/prompt assets to migrate:
 - `/home/runner/work/claude-mem-bk/claude-mem-bk/plugin/skills/smart-explore/SKILL.md`
 - `/home/runner/work/claude-mem-bk/claude-mem-bk/docs/public/smart-explore-benchmark.mdx`
 
-## Target standalone architecture
+## Target standalone architecture (proposed solution)
 
-Proposed package layout:
+Use a **library-first monorepo layout**:
 
 - `packages/core`
   - parser and search logic (portable library)
@@ -39,19 +39,17 @@ Proposed package layout:
 - `packages/docs` (optional)
   - benchmark and usage docs
 
-Alternative (simpler): single-package repo with `src/core` + `src/server`.
-
 ## Phase-by-phase implementation plan
 
 ### Phase 1 — Bootstrap standalone repository
 
-1. Initialize repo and Node/Bun toolchain.
+1. Initialize repo with a **Node-only** toolchain (Node 20+).
 2. Add TypeScript build config and scripts.
 3. Add dependencies:
    - `@modelcontextprotocol/sdk` (if exposing MCP server)
    - `tree-sitter-cli`
    - language grammars currently used by parser
-4. Add CI workflow for build + tests.
+4. Add CI workflow for build + tests using **Node/npm only** (no Bun).
 
 Deliverable:
 - Clean repo building successfully with placeholder server and tool registration.
@@ -152,24 +150,16 @@ Deliverable:
 - [ ] Add “when to use Smart Explore vs full-agent synthesis” guidance.
 - [ ] Include troubleshooting for missing grammars and CLI path issues.
 
-## Migration strategy options
+## Migration strategy (selected)
 
-### Option A: Hard fork (fastest)
-
-- Copy Smart Explore modules and MCP tool wiring directly.
-- Remove non-smart tools.
-- Ship quickly; refactor later.
-
-Pros: shortest time-to-first-release.
-Cons: may carry technical debt from host repo assumptions.
-
-### Option B: Library-first extraction (recommended)
+### Library-first extraction (selected)
 
 - Extract core library first, then build MCP adapter on top.
 - Define stable APIs and tests before packaging.
+- Keep runtime and developer workflows Node-only (npm scripts and Node execution).
 
-Pros: cleaner architecture, better long-term maintainability.
-Cons: slightly longer initial effort.
+Pros: cleaner architecture, better long-term maintainability, easier future reuse.
+Tradeoff: slightly longer initial effort.
 
 ## Acceptance criteria for standalone project
 
