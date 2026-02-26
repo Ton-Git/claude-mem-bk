@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { searchCodebase, formatSearchResults } from '../src/core/search.js';
 
-async function makeFixture() {
+async function setupTestFixture() {
   const root = await mkdtemp(join(tmpdir(), 'smart-explore-search-'));
   await mkdir(join(root, 'src'), { recursive: true });
   await mkdir(join(root, 'node_modules', 'lib'), { recursive: true });
@@ -17,7 +17,7 @@ async function makeFixture() {
 }
 
 test('searchCodebase ignores ignored directories and returns symbol matches', async () => {
-  const root = await makeFixture();
+  const root = await setupTestFixture();
 
   try {
     const parserBatch = (files) => {
@@ -76,7 +76,7 @@ test('searchCodebase ignores ignored directories and returns symbol matches', as
 });
 
 test('searchCodebase supports filePattern filter', async () => {
-  const root = await makeFixture();
+  const root = await setupTestFixture();
 
   try {
     const parserBatch = (files) => {

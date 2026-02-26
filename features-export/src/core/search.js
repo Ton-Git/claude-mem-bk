@@ -37,7 +37,7 @@ async function* walkDir(dir, maxDepth = 20) {
   }
 
   for (const entry of entries) {
-    if ((entry.name.startsWith('.') && entry.name !== '.') || IGNORE_DIRS.has(entry.name)) continue;
+    if (entry.name.startsWith('.') || IGNORE_DIRS.has(entry.name)) continue;
 
     const fullPath = join(dir, entry.name);
 

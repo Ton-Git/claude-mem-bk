@@ -158,7 +158,7 @@ function getQueryFile(queryKey) {
   if (queryFileCache.has(queryKey)) return queryFileCache.get(queryKey);
 
   if (!queryTmpDir) {
-    queryTmpDir = mkdtempSync(join(tmpdir(), 'smart-read-queries-'));
+    queryTmpDir = mkdtempSync(join(tmpdir(), 'smart-explore-queries-'));
   }
 
   const filePath = join(queryTmpDir, `${queryKey}.scm`);
@@ -216,7 +216,7 @@ function parseMultiFileQueryOutput(output) {
   let currentMatch = null;
 
   for (const line of output.split('\n')) {
-    if (line.length > 0 && !line.startsWith(' ') && !line.startsWith('\t')) {
+    if (line.length > 0 && !/^\s/.test(line)) {
       currentFile = line.trim();
       if (!fileMatches.has(currentFile)) fileMatches.set(currentFile, []);
       currentMatch = null;
@@ -476,7 +476,7 @@ export function parseFile(content, filePath) {
   const queryFile = getQueryFile(queryKey);
 
   const ext = filePath.slice(filePath.lastIndexOf('.')) || '.txt';
-  const tmpDir = mkdtempSync(join(tmpdir(), 'smart-src-'));
+  const tmpDir = mkdtempSync(join(tmpdir(), 'smart-explore-src-'));
   const tmpFile = join(tmpDir, `source${ext}`);
   writeFileSync(tmpFile, content);
 
