@@ -18,15 +18,15 @@ while minimizing coupling to claude-mem internals.
 ## Source-of-truth modules to extract
 
 Primary code:
-- `/home/runner/work/claude-mem-bk/claude-mem-bk/src/services/smart-file-read/parser.ts`
-- `/home/runner/work/claude-mem-bk/claude-mem-bk/src/services/smart-file-read/search.ts`
+- `src/services/smart-file-read/parser.ts`
+- `src/services/smart-file-read/search.ts`
 
 Integration adapter to recreate in new repo:
-- Smart tool wiring currently in `/home/runner/work/claude-mem-bk/claude-mem-bk/src/servers/mcp-server.ts`
+- Smart tool wiring currently in `src/servers/mcp-server.ts`
 
 Documentation/prompt assets to migrate:
-- `/home/runner/work/claude-mem-bk/claude-mem-bk/plugin/skills/smart-explore/SKILL.md`
-- `/home/runner/work/claude-mem-bk/claude-mem-bk/docs/public/smart-explore-benchmark.mdx`
+- `plugin/skills/smart-explore/SKILL.md`
+- `docs/public/smart-explore-benchmark.mdx`
 
 ## Target standalone architecture (proposed solution)
 

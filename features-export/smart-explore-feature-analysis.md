@@ -8,15 +8,15 @@ This analysis covers every repository file with direct references to Smart Explo
 
 | File | Reference type | Why it matters |
 |---|---|---|
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/src/servers/mcp-server.ts` | Runtime tool registration and handlers | Exposes Smart Explore as MCP tools and wires request handling |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/src/services/smart-file-read/search.ts` | Core search implementation | Implements codebase traversal, matching, ranking, and Smart Search response format |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/src/services/smart-file-read/parser.ts` | Core parser and unfold engine | Implements tree-sitter parsing, folded outlines, and symbol unfolding |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/plugin/skills/smart-explore/SKILL.md` | Agent behavior contract | Defines how agents should use Smart Explore tools |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/scripts/build-hooks.js` | Build/distribution integration | Verifies Smart Explore skill is included in distributable plugin |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/docs/public/smart-explore-benchmark.mdx` | Product/benchmark documentation | Documents performance claims and intended usage boundaries |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/docs/public/docs.json` | Docs navigation integration | Publishes Smart Explore benchmark in docs sidebar |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/CHANGELOG.md` | Release history references | Captures rollout timeline and claim evolution |
-| `/home/runner/work/claude-mem-bk/claude-mem-bk/plugin/scripts/mcp-server.cjs` | Built artifact mirror | Generated output containing transpiled Smart Explore runtime (not source of truth) |
+| `src/servers/mcp-server.ts` | Runtime tool registration and handlers | Exposes Smart Explore as MCP tools and wires request handling |
+| `src/services/smart-file-read/search.ts` | Core search implementation | Implements codebase traversal, matching, ranking, and Smart Search response format |
+| `src/services/smart-file-read/parser.ts` | Core parser and unfold engine | Implements tree-sitter parsing, folded outlines, and symbol unfolding |
+| `plugin/skills/smart-explore/SKILL.md` | Agent behavior contract | Defines how agents should use Smart Explore tools |
+| `scripts/build-hooks.js` | Build/distribution integration | Verifies Smart Explore skill is included in distributable plugin |
+| `docs/public/smart-explore-benchmark.mdx` | Product/benchmark documentation | Documents performance claims and intended usage boundaries |
+| `docs/public/docs.json` | Docs navigation integration | Publishes Smart Explore benchmark in docs sidebar |
+| `CHANGELOG.md` | Release history references | Captures rollout timeline and claim evolution |
+| `plugin/scripts/mcp-server.cjs` | Built artifact mirror | Generated output containing transpiled Smart Explore runtime (not source of truth) |
 
 ## Architecture overview
 

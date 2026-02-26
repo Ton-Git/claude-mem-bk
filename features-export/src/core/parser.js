@@ -4,15 +4,13 @@ import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 
-const _require = typeof __filename !== 'undefined'
-  ? createRequire(__filename)
-  : createRequire(import.meta.url);
+const _require = createRequire(import.meta.url);
 
 const LANG_MAP = {
   '.js': 'javascript',
   '.mjs': 'javascript',
   '.cjs': 'javascript',
-  '.jsx': 'tsx',
+  '.jsx': 'javascript',
   '.ts': 'typescript',
   '.tsx': 'tsx',
   '.py': 'python',
@@ -112,11 +110,15 @@ const KIND_MAP = {
 };
 
 const CONTAINER_KINDS = new Set(['class', 'struct', 'impl', 'trait']);
+const SIGNATURE_MAX_LEN = 200;
+const SIGNATURE_LOOKAHEAD_LINES = 10;
+const SIGNATURE_BRACE_WINDOW = 500;
 
 let queryTmpDir = null;
 const queryFileCache = new Map();
 let cachedBinPath = null;
 const TREE_SITTER_TIMEOUT_MS = 30000;
+let cleanupRegistered = false;
 
 export function detectLanguage(filePath) {
   const ext = filePath.slice(filePath.lastIndexOf('.'));
@@ -160,6 +162,7 @@ function getQueryFile(queryKey) {
 
   if (!queryTmpDir) {
     queryTmpDir = mkdtempSync(join(tmpdir(), 'smart-explore-queries-'));
+    registerQueryTmpCleanup();
   }
 
   const filePath = join(queryTmpDir, `${queryKey}.scm`);
@@ -184,6 +187,20 @@ function getTreeSitterBin() {
 
   cachedBinPath = 'tree-sitter';
   return cachedBinPath;
+}
+
+function registerQueryTmpCleanup() {
+  if (cleanupRegistered) return;
+  cleanupRegistered = true;
+
+  const cleanup = () => {
+    if (!queryTmpDir) return;
+    rmSync(queryTmpDir, { recursive: true, force: true });
+    queryTmpDir = null;
+  };
+
+  process.once('exit', cleanup);
+  process.once('beforeExit', cleanup);
 }
 
 function runBatchQuery(queryFile, sourceFiles, grammarPath) {
@@ -252,14 +269,14 @@ function parseMultiFileQueryOutput(output) {
   return fileMatches;
 }
 
-function extractSignatureFromLines(lines, startRow, endRow, maxLen = 200) {
+function extractSignatureFromLines(lines, startRow, endRow, maxLen = SIGNATURE_MAX_LEN) {
   const firstLine = lines[startRow] || '';
   let sig = firstLine;
 
   if (!sig.trimEnd().endsWith('{') && !sig.trimEnd().endsWith(':')) {
-    const chunk = lines.slice(startRow, Math.min(startRow + 10, endRow + 1)).join('\n');
+    const chunk = lines.slice(startRow, Math.min(startRow + SIGNATURE_LOOKAHEAD_LINES, endRow + 1)).join('\n');
     const braceIdx = chunk.indexOf('{');
-    if (braceIdx !== -1 && braceIdx < 500) {
+    if (braceIdx !== -1 && braceIdx < SIGNATURE_BRACE_WINDOW) {
       sig = chunk.slice(0, braceIdx).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
     }
   }
@@ -571,18 +588,40 @@ export function parseFilesBatch(files) {
 export function unfoldSymbol(content, filePath, symbolName, options = {}) {
   const file = options.parsedFile || parseFile(content, filePath);
 
-  const findSymbol = (symbols) => {
+  const findSymbolByName = (symbols) => {
     for (const sym of symbols) {
       if (sym.name === symbolName) return sym;
       if (sym.children) {
-        const found = findSymbol(sym.children);
+        const found = findSymbolByName(sym.children);
         if (found) return found;
       }
     }
     return null;
   };
 
-  const symbol = findSymbol(file.symbols);
+  const findSymbolByPath = (symbols, segments, index) => {
+    if (!Array.isArray(segments) || index >= segments.length) return null;
+
+    const segment = segments[index];
+    for (const sym of symbols) {
+      if (sym.name !== segment) continue;
+      if (index === segments.length - 1) return sym;
+      if (sym.children?.length) {
+        const found = findSymbolByPath(sym.children, segments, index + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  let symbol = findSymbolByName(file.symbols);
+  if (!symbol && typeof symbolName === 'string' && symbolName.includes('.')) {
+    const segments = symbolName.split('.').filter((s) => s.length > 0);
+    if (segments.length > 0) {
+      symbol = findSymbolByPath(file.symbols, segments, 0);
+    }
+  }
+
   if (!symbol) return null;
 
   const lines = content.split('\n');

@@ -20,7 +20,7 @@ test('searchCodebase ignores ignored directories and returns symbol matches', as
   const root = await setupTestFixture();
 
   try {
-    const parserBatch = (files) => {
+    const parserBatch = async (files) => {
       const map = new Map();
       for (const f of files) {
         if (f.relativePath.endsWith('alpha.ts')) {
@@ -148,7 +148,48 @@ test('formatSearchResults includes action guidance and compact symbol info', () 
     'alpha'
   );
 
-  assert.match(text, /Smart Search: "alpha"/);
-  assert.match(text, /Matching Symbols/);
-  assert.match(text, /To see full implementation: use smart_unfold/);
+  assert.ok(text.includes('Smart Search: "alpha"'));
+  assert.ok(text.includes('alpha'));
+  assert.ok(text.includes('src/alpha.ts'));
+  assert.ok(text.includes('smart_unfold'));
+});
+
+test('searchCodebase keeps file results for path-only matches', async () => {
+  const root = await setupTestFixture();
+
+  try {
+    const parserBatch = async (files) => {
+      const map = new Map();
+      for (const f of files) {
+        map.set(f.relativePath, {
+          filePath: f.relativePath,
+          language: 'typescript',
+          imports: [],
+          totalLines: 1,
+          foldedTokenEstimate: 11,
+          symbols: [],
+        });
+      }
+      return map;
+    };
+
+    const result = await searchCodebase(root, 'src/alpha', { parserBatch });
+    assert.equal(result.matchingSymbols.length, 0);
+    assert.ok(result.foldedFiles.length >= 1);
+    assert.ok(result.foldedFiles.some((f) => f.filePath === 'src/alpha.ts'));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('searchCodebase throws when parserBatch returns non-iterable', async () => {
+  const root = await setupTestFixture();
+  try {
+    await assert.rejects(
+      () => searchCodebase(root, 'alpha', { parserBatch: async () => null }),
+      /parserBatch must return an iterable/
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

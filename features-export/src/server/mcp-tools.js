@@ -27,7 +27,7 @@ export function createSmartExploreTools(deps = {}) {
       handler: async (args) => {
         const rootDir = resolve(args.path || process.cwd());
         const result = await searchFn(rootDir, args.query, {
-          maxResults: args.max_results || 20,
+          maxResults: args.max_results ?? 20,
           filePattern: args.file_pattern,
         });
         return { content: [{ type: 'text', text: formatSearchResults(result, args.query) }] };
@@ -72,7 +72,14 @@ export function createSmartExploreTools(deps = {}) {
 
         const parsed = parseFn(content, filePath);
         if (parsed.symbols.length > 0) {
-          const available = parsed.symbols.map((s) => `  - ${s.name} (${s.kind})`).join('\n');
+          const flattenSymbols = (symbols, parent = '') => symbols.flatMap((s) => {
+            const fullName = parent ? `${parent}.${s.name}` : s.name;
+            const own = [{ name: fullName, kind: s.kind }];
+            if (s.children?.length) return own.concat(flattenSymbols(s.children, fullName));
+            return own;
+          });
+
+          const available = flattenSymbols(parsed.symbols).map((s) => `  - ${s.name} (${s.kind})`).join('\n');
           return {
             content: [{ type: 'text', text: `Symbol "${args.symbol_name}" not found in ${args.file_path}.\n\nAvailable symbols:\n${available}` }],
           };

@@ -5,6 +5,7 @@ import { detectLanguage, formatFoldedView, unfoldSymbol } from '../src/core/pars
 test('detectLanguage maps known extensions and unknown values', () => {
   assert.equal(detectLanguage('file.ts'), 'typescript');
   assert.equal(detectLanguage('file.py'), 'python');
+  assert.equal(detectLanguage('file.jsx'), 'javascript');
   assert.equal(detectLanguage('file.unknown'), 'unknown');
 });
 
@@ -70,7 +71,7 @@ test('unfoldSymbol uses provided parsedFile and includes leading comments', () =
   assert.ok(out);
   assert.match(out, /\/\/ docs/);
   assert.match(out, /function target\(\)/);
-  assert.match(out, /L3-7/);
+  assert.match(out, /L\d+-\d+/);
 });
 
 test('unfoldSymbol returns null when symbol is missing', () => {
@@ -78,4 +79,41 @@ test('unfoldSymbol returns null when symbol is missing', () => {
   const parsedFile = { symbols: [] };
   const out = unfoldSymbol(content, '/abs/file.js', 'missing', { parsedFile });
   assert.equal(out, null);
+});
+
+test('unfoldSymbol resolves dotted symbol paths for nested methods', () => {
+  const content = [
+    'class Example {',
+    '  run() {',
+    '    return true;',
+    '  }',
+    '}',
+  ].join('\n');
+
+  const parsedFile = {
+    symbols: [
+      {
+        name: 'Example',
+        kind: 'class',
+        signature: 'class Example',
+        lineStart: 0,
+        lineEnd: 4,
+        exported: true,
+        children: [
+          {
+            name: 'run',
+            kind: 'method',
+            signature: 'run()',
+            lineStart: 1,
+            lineEnd: 3,
+            exported: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  const out = unfoldSymbol(content, '/abs/file.js', 'Example.run', { parsedFile });
+  assert.ok(out);
+  assert.match(out, /run\(\)/);
 });

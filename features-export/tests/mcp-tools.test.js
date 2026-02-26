@@ -12,19 +12,24 @@ test('createSmartExploreTools exposes three smart_* tools', () => {
 });
 
 test('smart_search tool delegates to search function and formats output', async () => {
+  let seenMaxResults;
   const tools = createSmartExploreTools({
-    searchFn: async () => ({
-      foldedFiles: [],
-      matchingSymbols: [],
-      totalFilesScanned: 0,
-      totalSymbolsFound: 0,
-      tokenEstimate: 0,
-    }),
+    searchFn: async (_root, _query, options) => {
+      seenMaxResults = options.maxResults;
+      return {
+        foldedFiles: [],
+        matchingSymbols: [],
+        totalFilesScanned: 0,
+        totalSymbolsFound: 0,
+        tokenEstimate: 0,
+      };
+    },
   });
 
-  const result = await callSmartExploreTool(tools, 'smart_search', { query: 'x', path: '/tmp' });
+  const result = await callSmartExploreTool(tools, 'smart_search', { query: 'x', path: '/tmp', max_results: 0 });
   assert.equal(result.content[0].type, 'text');
   assert.match(result.content[0].text, /Smart Search: "x"/);
+  assert.equal(seenMaxResults, 0);
 });
 
 test('smart_outline returns formatted outline for parsed symbols', async () => {
@@ -66,6 +71,16 @@ test('smart_unfold returns fallback symbol list when symbol is missing', async (
           lineStart: 0,
           lineEnd: 0,
           exported: true,
+          children: [
+            {
+              name: 'y',
+              kind: 'method',
+              signature: 'y()',
+              lineStart: 1,
+              lineEnd: 2,
+              exported: false,
+            },
+          ],
         },
       ],
     }),
@@ -78,6 +93,7 @@ test('smart_unfold returns fallback symbol list when symbol is missing', async (
 
   assert.match(result.content[0].text, /Available symbols/);
   assert.match(result.content[0].text, /x \(function\)/);
+  assert.match(result.content[0].text, /x\.y \(method\)/);
 });
 
 test('callSmartExploreTool throws on unknown tool name', async () => {

@@ -24,7 +24,9 @@ export const IGNORE_DIRS = new Set([
   '.claude', '.smart-file-read',
 ]);
 
+// Keep reads bounded to avoid expensive parsing on very large files.
 const MAX_FILE_SIZE_BYTES = 512 * 1024;
+const BINARY_DETECTION_SAMPLE_SIZE = 1000;
 
 async function* walkDir(dir, maxDepth = 20) {
   if (maxDepth <= 0) return;
@@ -56,7 +58,7 @@ async function safeReadFile(filePath) {
     if (stats.size > MAX_FILE_SIZE_BYTES || stats.size === 0) return null;
 
     const content = await readFile(filePath, 'utf-8');
-    if (content.slice(0, 1000).includes('\0')) return null;
+    if (content.slice(0, BINARY_DETECTION_SAMPLE_SIZE).includes('\0')) return null;
 
     return content;
   } catch {
@@ -98,7 +100,7 @@ function countSymbols(file) {
 }
 
 export async function searchCodebase(rootDir, query, options = {}) {
-  const maxResults = options.maxResults || 20;
+  const maxResults = options.maxResults ?? 20;
   const queryLower = query.toLowerCase();
   const queryParts = queryLower.split(/[\s_\-./]+/).filter((p) => p.length > 0);
 
@@ -120,8 +122,11 @@ export async function searchCodebase(rootDir, query, options = {}) {
     });
   }
 
-  const parser = options.parserBatch || parseFilesBatch;
-  const parsedFiles = parser(filesToParse);
+  const parser = options.parserBatch ?? parseFilesBatch;
+  const parsedFiles = await parser(filesToParse);
+  if (!parsedFiles || typeof parsedFiles[Symbol.iterator] !== 'function') {
+    throw new TypeError('parserBatch must return an iterable of [relativePath, parsedFile] pairs');
+  }
 
   const foldedFiles = [];
   const matchingSymbols = [];
@@ -157,9 +162,10 @@ export async function searchCodebase(rootDir, query, options = {}) {
 
         if (score > 0) {
           fileHasMatch = true;
+          const symbolPath = parent ? `${parent}.${sym.name}` : sym.name;
           fileSymbolMatches.push({
             filePath: relPath,
-            symbolName: parent ? `${parent}.${sym.name}` : sym.name,
+            symbolName: symbolPath,
             kind: sym.kind,
             signature: sym.signature,
             jsdoc: sym.jsdoc,
@@ -169,7 +175,10 @@ export async function searchCodebase(rootDir, query, options = {}) {
           });
         }
 
-        if (sym.children) checkSymbols(sym.children, sym.name);
+        if (sym.children) {
+          const symbolPath = parent ? `${parent}.${sym.name}` : sym.name;
+          checkSymbols(sym.children, symbolPath);
+        }
       }
     };
 
@@ -188,8 +197,13 @@ export async function searchCodebase(rootDir, query, options = {}) {
   });
 
   const trimmedSymbols = matchingSymbols.slice(0, maxResults);
-  const relevantFiles = new Set(trimmedSymbols.map((s) => s.filePath));
-  const trimmedFiles = foldedFiles.filter((f) => relevantFiles.has(f.filePath)).slice(0, maxResults);
+  let trimmedFiles;
+  if (trimmedSymbols.length === 0) {
+    trimmedFiles = foldedFiles.slice(0, maxResults);
+  } else {
+    const relevantFiles = new Set(trimmedSymbols.map((s) => s.filePath));
+    trimmedFiles = foldedFiles.filter((f) => relevantFiles.has(f.filePath)).slice(0, maxResults);
+  }
 
   const tokenEstimate = trimmedFiles.reduce((sum, f) => sum + f.foldedTokenEstimate, 0);
 
@@ -211,6 +225,19 @@ export function formatSearchResults(result, query) {
   parts.push('');
 
   if (result.matchingSymbols.length === 0) {
+    if (result.foldedFiles.length > 0) {
+      parts.push('   No matching symbols found, but matching files were found by path.');
+      parts.push('');
+      parts.push('── Folded File Views ──');
+      parts.push('');
+      for (const file of result.foldedFiles) {
+        parts.push(formatFoldedView(file));
+        parts.push('');
+      }
+      parts.push('── Actions ──');
+      parts.push('  Use smart_unfold with a symbol name from the folded views');
+      return parts.join('\n');
+    }
     parts.push('   No matching symbols found.');
     return parts.join('\n');
   }
