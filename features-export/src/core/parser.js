@@ -116,6 +116,7 @@ const CONTAINER_KINDS = new Set(['class', 'struct', 'impl', 'trait']);
 let queryTmpDir = null;
 const queryFileCache = new Map();
 let cachedBinPath = null;
+const TREE_SITTER_TIMEOUT_MS = 30000;
 
 export function detectLanguage(filePath) {
   const ext = filePath.slice(filePath.lastIndexOf('.'));
@@ -195,7 +196,7 @@ function runBatchQuery(queryFile, sourceFiles, grammarPath) {
   try {
     output = execFileSync(bin, execArgs, {
       encoding: 'utf-8',
-      timeout: 30000,
+      timeout: TREE_SITTER_TIMEOUT_MS,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
   } catch {

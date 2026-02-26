@@ -24,7 +24,7 @@ export const IGNORE_DIRS = new Set([
   '.claude', '.smart-file-read',
 ]);
 
-const MAX_FILE_SIZE = 512 * 1024;
+const MAX_FILE_SIZE_BYTES = 512 * 1024;
 
 async function* walkDir(dir, maxDepth = 20) {
   if (maxDepth <= 0) return;
@@ -53,7 +53,7 @@ async function* walkDir(dir, maxDepth = 20) {
 async function safeReadFile(filePath) {
   try {
     const stats = await stat(filePath);
-    if (stats.size > MAX_FILE_SIZE || stats.size === 0) return null;
+    if (stats.size > MAX_FILE_SIZE_BYTES || stats.size === 0) return null;
 
     const content = await readFile(filePath, 'utf-8');
     if (content.slice(0, 1000).includes('\0')) return null;
