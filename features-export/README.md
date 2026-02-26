@@ -29,7 +29,7 @@ If you are packaging this as a standalone module, these are the core files to mi
 Install dependencies from the repository root:
 
 ```bash
-cd /home/runner/work/claude-mem-bk/claude-mem-bk
+cd <repository-root>
 npm install
 ```
 
@@ -40,7 +40,7 @@ npm install
 From repository root:
 
 ```bash
-cd /home/runner/work/claude-mem-bk/claude-mem-bk
+cd <repository-root>
 npm run build
 ```
 
@@ -58,7 +58,7 @@ The MCP server depends on the worker API (`http://localhost:37777`) for search/t
 ### 1) Start worker service
 
 ```bash
-cd /home/runner/work/claude-mem-bk/claude-mem-bk
+cd <repository-root>
 npm run worker:start
 ```
 
@@ -71,7 +71,7 @@ curl http://localhost:37777/api/health
 ### 2) Start MCP server over stdio
 
 ```bash
-cd /home/runner/work/claude-mem-bk/claude-mem-bk
+cd <repository-root>
 node plugin/scripts/mcp-server.cjs
 ```
 
@@ -92,7 +92,7 @@ Create or update your MCP config (for example `.vscode/mcp.json` in your workspa
       "type": "stdio",
       "command": "node",
       "args": [
-        "/home/runner/work/claude-mem-bk/claude-mem-bk/plugin/scripts/mcp-server.cjs"
+        "/absolute/path/to/your/claude-mem/plugin/scripts/mcp-server.cjs"
       ]
     }
   }
@@ -102,7 +102,7 @@ Create or update your MCP config (for example `.vscode/mcp.json` in your workspa
 If you installed Claude-Mem through the Claude marketplace instead of running from source, point `args[0]` to your installed path, typically:
 
 - macOS/Linux: `~/.claude/plugins/marketplaces/thedotmack/plugin/scripts/mcp-server.cjs`
-- Windows: `C:\\Users\\<you>\\.claude\\plugins\\marketplaces\\thedotmack\\plugin\\scripts\\mcp-server.cjs`
+- Windows: `C:\\Users\\<your-username>\\.claude\\plugins\\marketplaces\\thedotmack\\plugin\\scripts\\mcp-server.cjs`
 
 ### Recommended environment variables (optional)
 
