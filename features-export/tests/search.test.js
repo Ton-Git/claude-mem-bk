@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, normalize } from 'node:path';
 import { searchCodebase, formatSearchResults } from '../src/core/search.js';
 
 async function setupTestFixture() {
@@ -69,7 +69,7 @@ test('searchCodebase ignores ignored directories and returns symbol matches', as
     assert.equal(result.matchingSymbols.length, 1);
     assert.equal(result.matchingSymbols[0].symbolName, 'alpha');
     assert.equal(result.foldedFiles.length, 1);
-    assert.equal(result.foldedFiles[0].filePath, 'src/alpha.ts');
+    assert.equal(result.foldedFiles[0].filePath, normalize('src/alpha.ts'));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -110,7 +110,7 @@ test('searchCodebase supports filePattern filter', async () => {
 
     assert.equal(result.totalFilesScanned, 1);
     assert.equal(result.foldedFiles.length, 1);
-    assert.equal(result.foldedFiles[0].filePath, 'src/alpha.ts');
+    assert.equal(result.foldedFiles[0].filePath, normalize('src/alpha.ts'));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -121,7 +121,7 @@ test('formatSearchResults includes action guidance and compact symbol info', () 
     {
       foldedFiles: [
         {
-          filePath: 'src/alpha.ts',
+          filePath: normalize('src/alpha.ts'),
           language: 'typescript',
           imports: [],
           totalLines: 10,
@@ -131,7 +131,7 @@ test('formatSearchResults includes action guidance and compact symbol info', () 
       ],
       matchingSymbols: [
         {
-          filePath: 'src/alpha.ts',
+          filePath: normalize('src/alpha.ts'),
           symbolName: 'alpha',
           kind: 'function',
           signature: 'function alpha() : number',
@@ -150,7 +150,7 @@ test('formatSearchResults includes action guidance and compact symbol info', () 
 
   assert.ok(text.includes('Smart Search: "alpha"'));
   assert.ok(text.includes('alpha'));
-  assert.ok(text.includes('src/alpha.ts'));
+    assert.ok(text.includes(normalize('src/alpha.ts')));
   assert.ok(text.includes('smart_unfold'));
 });
 
@@ -173,10 +173,10 @@ test('searchCodebase keeps file results for path-only matches', async () => {
       return map;
     };
 
-    const result = await searchCodebase(root, 'src/alpha', { parserBatch });
+    const result = await searchCodebase(root, normalize('src/alpha'), { parserBatch });
     assert.equal(result.matchingSymbols.length, 0);
     assert.ok(result.foldedFiles.length >= 1);
-    assert.ok(result.foldedFiles.some((f) => f.filePath === 'src/alpha.ts'));
+    assert.ok(result.foldedFiles.some((f) => f.filePath === normalize('src/alpha.ts')));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
