@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 
 const SRC_ROOT = new URL('../src/', import.meta.url);
+const IMPORT_SPECIFIER_PATTERN = /(?:import\s+[^'"\n]+from\s+|import\()\s*['"]([^'"]+)['"]/g;
 
 async function collectJsFiles(dirUrl) {
   const entries = await readdir(dirUrl, { withFileTypes: true });
@@ -29,12 +30,12 @@ test('features-export has local-only source imports', async () => {
   for (const fileUrl of jsFiles) {
     const content = await readFile(fileUrl, 'utf-8');
     const source = fileUrl.pathname.split('/features-export/')[1];
-    const importSpecifiers = Array.from(content.matchAll(/(?:import\s+[^'"\n]+from\s+|import\()\s*['"]([^'"]+)['"]/g)).map((match) => match[1]);
+    const importSpecifiers = Array.from(content.matchAll(IMPORT_SPECIFIER_PATTERN)).map((match) => match[1]);
 
     for (const specifier of importSpecifiers) {
       if (!specifier.startsWith('.')) continue;
-      assert.ok(!specifier.startsWith('../../'), `${source} has external relative import: ${specifier}`);
-      assert.ok(!specifier.startsWith('../..\\'), `${source} has external relative import: ${specifier}`);
+      const normalizedSpecifier = specifier.replaceAll('\\', '/');
+      assert.ok(!normalizedSpecifier.startsWith('../../'), `${source} has external relative import: ${specifier}`);
     }
   }
 });
